@@ -6,5 +6,5 @@ Shoesize43 <- subset(persData, shoesize ==43)
 Shoesizeunder40 <- subset(persData, shoesize < 40)
 mean(persData$shoesize) #How to find the mean of a column
 AverageShoesize <- mean(persData$shoesize)
-AverageShoesize hej
+
 
