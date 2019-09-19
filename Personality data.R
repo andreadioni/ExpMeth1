@@ -26,3 +26,29 @@ SlowTongue <- arrange(persData, desc(tongue_twist))
 SlowTongue
 BestRomberg <- arrange(persData, desc(persData$romberg_open == 120))
 BestRomberg
+
+select(persData, name, name) #you just get the names? 
+select(persData, name, gender, shoesize, name) #same
+select(persData, name:gender) #colon means everything between name and gender)
+#select(persData, -c(name:gender, vis_duck:taste_blind))
+#select(persData, gender, everything())
+
+vars = c("name", "shoesize", "touch_floor")
+select(persData, vars) #you get what is in your vector
+select(persData, gender, shoesize, everything()) #you get gender and shoesize first, everything else after that
+
+wordspersec <- mutate(persData, words_per_sec = 99/tongue_twist)
+
+breathmin <- mutate(persData, breath_hold %/% 60)
+breathmin
+
+by_gender <- group_by(persData, gender) 
+summarise(by_gender, mean(shoesize)) #find mean of genders
+
+#pipes # %>% reads ‘send the resulting dataframe(s) to the following function’.
+#shortcut cmd + shift + M
+persData %>% group_by(gender) %>% summarise(mean(breath_hold))
+
+tastecola <- (persData$taste_cola)
+
+persData %>% group_by(sound_level_pref) %>%  summarize(taste_cola) #error that group_by cannit be used on factor class
