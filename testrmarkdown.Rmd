@@ -1,0 +1,164 @@
+---
+title: "My first markdown"
+author: "Andrea"
+date: "9/19/2019"
+output: html_document
+---
+
+All text on white background is text
+CMD + Option + I makes new code field
+```{r}
+library(tidyverse)
+```
+
+---
+## Part 1: R Markdown intro
+(you can use ## so something you write looks like a header 2 like this one)
+
+### 1. Make a new R Markdown (with default: html as output)
+(you can use ### so it looks like header 3)
+
+Let's look at the completely new .Rmd file together :) 
+
+
+### 2. Let's see how to work with .Rmd files.
+First, change author name to yours - it'll be your notes and comments that will make this file way more valuable!
+
+Then we go to the setup chunk.
+
+
+####  A setup chunk {r setup} 
+(you can use #### so it looks like header 4... you get it)
+
+Below you can see a setup chunk. Any chunk can be a setup chunk if you write {r setup} at its beginning. 
+
+In this case we also ask R to not include the chunk in the output of this file by writing the setting {..., include=FALSE}. 
+
+In the setup chunk, you can change default settings for all chunks (e.g. see Command 1 and Command 2). 
+
+'knitr::' - means that we want to use functions specifically from the package knitr.
+
+```{r setup, include=FALSE}
+#Command 1: find default chunk options (opts_chunk), and set the setting echo (whether to show your code) to TRUE 
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#Command 2: set a new working directory to ALL chunks - not just the current chunk
+#You need to remove the # for it to work
+#knitr::opts_knit$set(root.dir = 'relative_path_to_root_from_Rmd' )
+```
+
+knitr::opts_knit$set(root.dir = 'relative_path_to_root_from_Rmd' )
+####  Making a new chunk 
+You can make a new R code chunk using keyboard shortcut Ctrl + Alt + I (Cmd + Option + I on macOS). Try it! Once the code chunk appears, try importing your data inside of it, using read.csv() function.
+
+It will only work if the file is inside of your working directory
+```{r}
+pd = read.csv("~/Desktop/ExpMeth1/xid-7217454_1.csv", header = TRUE)
+```
+ 
+
+##### Troubleshooting if you can't import data:
+1. Check your working directory getwd()
+2. Go to this working directory folder on your compurer and check if the file is out there in the open, not in a subfolder
+3. If the file is not there - put it there!
+4. Make sure that you wrote the name of the file correctly in R, using quotation marks: e.g. "filename.csv" 
+5. If it still does not work, check if you have any other folders on your computer with the same name as your working directory (you might be putting your file to an irrelevant folder instead of working directory)
+6. If it still doesn't work, ask me or Fabio.
+
+####  A new chunk with an output
+Now make a new chunk! In it, find what class of data is stored in the column 'balloon_balance'. Use class() function we've learned in the first week. How does one refer to a column from a dataframe?
+
+```{r}
+class("balloon_balance")
+class(pd$balloon_balance)
+```
+
+## Part 2: New functions (if we have time)
+We will look at some new functions from the package tidyverse. Make a new chunk and load the tidyverse library - use either pacman::p_load() or library().
+
+```{r}
+pacman::p_load(tidyverse)
+```
+
+
+
+### summarise() function
+This function collapses the whole dataframe into a single summary. For this function to work, it has to follow certain pattern.  First, you specify the data frame you want to summarise and then you say what values you want to have in your summary.
+
+See examples in the chunk below, try to run it and make sense of results:
+
+```{r}
+#Make a summary with just one value - the average shoesize 
+summarise(pd,mean(shoesize))
+
+#summary with several values: the average shoesize and its standard deviation
+summarise(pd,mean(shoesize),sd(shoesize))
+```
+
+summarise() is quite useless by itself, but everything changes when we **group** our data!
+
+### group_by() function
+group_by() takes an existing data frame and converts it into a data frame grouped by some principle. See examples in the chunk below:
+
+```{r}
+#group data by gender
+grouped_bygender <- group_by(pd, gender)
+
+#group data by native language
+grouped_bylanguage <- group_by(pd, native_Danish)
+
+```
+
+When we apply different functions/operations on grouped data, we get outcomes for every group. 
+
+For instance:
+
+```{r}
+summarise(grouped_bygender, mean(breath_hold))
+```
+
+As you can see, by using summarise() on grouped data, we can already get some insight into our data and possible findings ("Guys are on average better at holding breath?!")
+
+Another example:
+
+```{r}
+summarise(grouped_bylanguage, mean(tongue_twist), sd(tongue_twist))
+```
+
+Knowing about mean and standard deviation, what do you think this summary shows?
+
+### Pipes
+Let's rehearse how we grouped data and summarised it. In the chunk below I group data by gender and then get a summary, that shows the mean shoe size in females and males. 
+Run it and see for yourself:
+```{r}
+grouped_data <- group_by(pd, gender) 
+summary_shoe_bygender <- summarise(grouped_data, mean(shoesize))
+
+#call the variable to see the summary output
+summary_shoe_bygender
+
+```
+This seems a bit clumsy to write all of this... There must be a better way!
+
+There is a better way and it's called pipes!!!
+
+You might ask - what is pipes? It's a very efficient way to write stuff down in R and it looks like this: %>%
+
+%>% reads ‘send the resulting dataframe(s) to the following function’
+
+You can type pipes faster by using the shortcut:
+cmd+shift+M (MacOS) or ctrl+shift+M (Others)
+
+Let's see how to do pipes in practice. We will try to recreate the same summary as in the previous code chunk:
+
+```{r}
+
+summary_shoe_bygender2 <- pd %>%  #send the df to the next line:
+  group_by(gender) %>% #group the data from the previous line by gender and send the result to the next line: 
+  summarise(mean(shoesize)) #summarise mean shoesize for data from the previous line
+
+summary_shoe_bygender2
+```
+
+As you can see, summary_shoe_bygender and summary_shoe_bygender2 are the same! Both ways work, but pipes make your code more efficient and much easier to read. 
