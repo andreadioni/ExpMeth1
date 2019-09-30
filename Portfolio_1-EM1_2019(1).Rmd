@@ -1,0 +1,194 @@
+---
+title: "Portfolio 1 — Experimental Methods 1 2019"
+author: "Fabio Trecca"
+date: "9/19/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE)
+```
+
+## Portfolio exam - Part 1
+
+#### Write a short data mining report on the CogSci Intro Week Personality Test Data in which you answer the following questions in prose, code and graphs:
+
+First of all, you have to import the personality data. If the dataset is in your working directory, then you can just load it into R. Otherwise you will have to change your working directory.
+
+```{r load_data}
+pd = read.csv("cleanpersdata.csv", header = TRUE)
+library(tidyverse)
+```
+
+Once you are done loading the data, you can start working on the questions below.
+
+#### Question 1
+
+Who can hold their breath longer on average, those with right or left ocular dominance? Plot the data using ggplot2 to find out. The plots should include error bars (depicting the standard error of the means). Then use the mean() and sd() functions to find mean and standard deviation of the two eye dominance groups.
+
+
+```{r question1}
+install.packages("showtext")
+library(showtext)
+font_add("Arial", "/Library/Fonts/Arial.ttf")  # Use the actual file path
+showtext_auto()
+
+ocularbreath <- ggplot(pd, aes(ocular_dom, breath_hold, fill = ocular_dom)) +
+  geom_bar(stat='summary', fun.y = mean) +
+  labs(x = "Ocular Dominance", y = "Handedness") +
+  geom_errorbar(stat = 'summary', fun.data = mean_se)
+
+ocularbreath
+
+eyemean <- pd %>% group_by(pd$ocular_dom) %>% summarize(mean(breath_hold))
+eyemean
+
+eyesd <-  pd %>% group_by(pd$ocular_dom) %>% summarize(sd(breath_hold))
+eyesd
+
+```
+
+Explain your results in plain terms here: 
+
+---
+
+#### Question 2
+
+Who likes silence vs. noise best? Males or females? Also in this case you should plot the data using ggplot2 (including error bars), then use the mean() and sd() functions to find mean and standard deviation of the two genders.
+
+```{r question2}
+gendersound <- ggplot(pd, aes(gender, sound_level_pref, fill = gender)) +
+  geom_bar(stat='summary', fun.y = mean) +
+  labs(x = "Gender", y = "Sound Level Preference") +
+  geom_errorbar(stat = 'summary', fun.data = mean_se, width = 0.4)
+
+gendersound
+
+soundmean <- pd %>% group_by(pd$gender) %>% summarize(mean(sound_level_pref))
+soundmean
+
+soundsd <-  pd %>% group_by(pd$gender) %>% summarize(sd(sound_level_pref))
+soundsd
+```
+
+Explain your results in plain terms here: 
+
+---
+
+#### Question 3
+
+Are the breath_hold data normally distributed? Provide visual and numeric support for your answer.
+
+```{r question3}
+breathdist <- ggplot(pd, aes(x=breath_hold)) +
+geom_histogram(aes(y = ..density..), binwidth = 4, colour = "Black", fill = "Red") +
+  labs(x = "Breath hold in seconds", y = "Frequency") +
+  stat_function(fun=dnorm, args=list(mean = mean(pd$breath_hold, na.rm = TRUE), sd(pd$breath_hold, na.rm = TRUE)), colour = "yellow", size = 3)
+
+library(pastecs)
+stat.desc(pd$breath_hold, basic = FALSE, norm = TRUE)
+
+breathdist
+
+#numeric support is p-value
+
+```
+
+
+Explain your results in plain terms here: 
+
+---
+
+#### Question4
+
+Are the Balloon reaction time data (balloon and balloon_balance) normally distributed? Provide visual and numeric support for your answer.
+
+```{r question4}
+balloonballancereaction <- ggplot(pd, aes(x = balloon_balance)) +
+geom_histogram(aes(y = ..density..), binwidth = 4, colour = "Black", fill = "Red") +
+  labs(x = "Balloon ballance in seconds", y = "Frequency") +
+  stat_function(fun = dnorm, args = list(mean = mean(pd$balloon_balance, na.rm = TRUE), sd(pd$balloon_balance, na.rm = TRUE)), colour = "yellow", size = 3)
+
+balloonballancereaction
+
+#a clear floor/ceiling effect. The task was way to hard for a lot of the participants, and way too easy for the rest
+
+stat.desc(pd$balloon_balance, basic = FALSE, norm = TRUE)
+```
+
+
+Balloonblowing
+```{r question4}
+balloonblowing <- ggplot(pd, aes(x= balloon)) +
+geom_histogram(aes(y = ..density..), binwidth = 4, colour = "Black", fill = "Red") +
+  labs(x = "Balloon blowing in seconds", y = "Frequency") +
+  stat_function(fun=dnorm, args=list(mean = mean(pd$balloon, na.rm = TRUE), sd(pd$balloon, na.rm = TRUE)), colour = "yellow", size = 3)
+
+balloonblowing
+#should remove outliers
+```
+
+Numeric support
+```{r question4}
+describe(cbind(pd$balloon_balance, pd$balloon))
+stat.desc(cbind(pd$balloon, pd$balloon_balance), basic = FALSE, norm = TRUE)
+round(stat.desc(pd[, c("balloon", "balloon_balance")], basic = FALSE, norm = TRUE), digits = 3) #round it to handable decimals
+
+
+```
+
+
+Explain your results in plain terms here: 
+
+The p-value for balloonblowing (0,000000000105) is a lot below 0.05 indicating that our observed data is significantly different from the normal distribution. 
+The same goes for the balloonbalancing with has an even lower p-value. The data for balloon-balancing is clearly influenced by ceiling/floor phenomenon. Therefore this test might not be able to give us any definitive answers. 
+The data for the ballon-blowing is clearing influenced by several outliers as 120 seconds. Removing these would give us more normally distributed data. Both data coloums has a skew.2SE of over 1, which lets us know that the data is significantly skewed, which the visually represented data already had showed us. 
+
+---
+
+#### Question 5
+
+Shoe size could tell us something about general body size, which could also be connected to one's ability to hold your breath. In other words we predict that there is a positive relation between shoe size and how long time CogSci students can hold their breath. Try plotting the two sets of data against each other using a scatter plot (hint: both variables are continuous variables). Bonus question: Males and females have different body sizes. Use grouping in your plot to distinguish the relationship between shoe size and holding breath for males and females.
+
+```{r question5}
+#if we just look at the general relation between shoesize and breath hold, with no regards to gender:
+scatter <- ggplot(pd, aes(shoesize, breath_hold))
+scatter + geom_point(size = 2) +
+  geom_smooth(method = "lm", se = T, alpha = 0.1) +
+  labs(x = "Shoesize", y = "Breath Hold in Seconds")
+
+#here it is quite obvious when looking at the linear model, that there is a postive relation between body/shoe size and ability to hold your breath longer
+
+#but if we divide it by gender, we see that this positive relation is only really true for women. For the males the relation is almost flat, indicating that there is little to no relation between the two. However, as the confidence intervals are quite large, our data might not be very representative of the real world
+
+scatter2 <- ggplot(pd, aes(shoesize, breath_hold, colour = gender))
+scatter + geom_point(size = 2) +
+  geom_smooth(method = "lm", se = T, alpha = 0.1, aes(fill = gender)) +
+  labs(x = "Shoesize", y = "Breath Hold in Seconds")
+```
+
+And for the numeric support the mean of breath_hold has been divided into groups based on shoesize
+
+```{r question5}
+#numeric support 
+
+shoe_breath <- pd %>%
+  group_by(shoesize) %>%
+  summarise_at(vars(breath_hold), list(breath_hold_mean = mean))
+
+shoe_breath #here we can see that not counting size 43, 45 and 46 the mean for seconds of breathhold only goes up, once again indicating the positive relation between shoesize and ability to hold breath
+
+round(stat.desc(pd[, c("shoesize", "breath_hold")], basic = FALSE, norm = TRUE), digits = 3) #round it to handable decimals
+
+
+ggplot(df, aes(sample=x))+
+  stat_qq()+stat_qq_line(coulour = "red")
+```
+
+
+Explain your results in plain terms here: 
+
+
+
