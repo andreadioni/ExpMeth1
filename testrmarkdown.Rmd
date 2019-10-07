@@ -9,6 +9,7 @@ All text on white background is text
 CMD + Option + I makes new code field
 ```{r}
 library(tidyverse)
+getwd()
 ```
 
 ---
@@ -162,3 +163,220 @@ summary_shoe_bygender2
 ```
 
 As you can see, summary_shoe_bygender and summary_shoe_bygender2 are the same! Both ways work, but pipes make your code more efficient and much easier to read. 
+
+
+### Exercises
+
+Try the following exercises to practice summarise(), group_by(), mean() and pipes. Make a separate code chunk for every question.
+
+1. Is there a gender difference when it comes to balloon balancing?
+
+```{r}
+genderbalancing <-  pd %>% group_by(gender) %>% summarize(mean(balloon_balance))
+genderbalancing
+```
+Males are generally better at balloon balancing than women
+
+2. Is there a relation between sound level preference and which cola was chosen?
+
+```{r}
+colasound <- pd %>% group_by(pd$taste_cola) %>% summarize(mean(sound_level_pref), n())
+colasound #$ tegn fucks everything up
+```
+
+
+3. Does handedness influence average tongue twisting speed?
+
+  3a. Can you add a column to the summary, which contains number of people in each group (e.g. number of right handed people), hint: look at the n() function
+  
+```{r}
+tonguehands <- pd %>% group_by(pd$handedness) %>% summarize(mean(tongue_twist))
+tonguehands
+tonguehands1 <- mutate(pd, n() ) #STILL NOT WORKING
+```
+  
+  3b. What does number of people tell us about the estimates of the mean? Are our results reliable?
+
+
+
+## Part 3: Including Plots
+R can draw plots, but they are not that pretty.
+
+An example that is always included when you start a new Rmd file - plotting some pressure data from package 'pressure':
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+We want to see all of your code, guys! So go ahead and fix it - make the code visible by removing the whole echo part, leaving just {r pressure}. 
+
+Knit again! Is the code there? Yes! And we want it there! 
+
+The plot is still ugly though...
+
+### Ggplot 2
+Ggplot 2 is a package for data visualization - a part of tidyverse. If you have tidyverse installed, you have ggplot2. Make a new chunk and read in the tidyverse library, if you haven't done so yet
+
+We will go through basics step by step (I basically copied this tutorial: http://r-statistics.co/ggplot2-Tutorial-With-R.html)
+
+#### Base setup
+First, you need to tell ggplot what dataset to use. This is done using the ggplot(df) function, where df is a dataframe that contains all features needed to make the plot. This is the most basic setup.
+
+
+```{r}
+ggplot(pd) # the most basic setup
+```
+
+
+Optionally you can add whatever aesthetics you want to apply to your ggplot (inside aes() argument) - such as X and Y axis by specifying the respective variables from the dataset. The variable based on which the color, size, shape and stroke should change can also be specified here itself. The aesthetics specified here will be inherited by all the geom layers you will add later. See examples below:
+
+```{r}
+#Examples of setups with different aesthetics:
+
+ggplot(pd, aes(x=gender)) # if only X-axis is known. The Y-axis can be specified later
+
+ggplot(df, aes(x=gender, y=balloon)) # if both X and Y axes are fixed for all layers.
+
+ggplot(df, aes(x=breath_hold, color=gender))  # Each category of the 'gender' variable will now have a distinct  color, once a geom is added.
+```
+
+
+As you can see, this graph does not show any data yet, we need to give ggplot more information!  We can do it by adding 'geoms' (layers) to our base setup.
+
+#### Geoms
+Once the base setup is done, you can append the geoms one on top of the other by using the plus sign! So technically all plots can be produced with the same structre: 
+
+basesetup +
+  geom 1 +
+  geom 2 +
+  ...
+  
+  
+There is a lot of different geoms in the ggplot2 package. See the cheatsheet to have an idea: https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf 
+
+##### geom_histogram()
+geom_histogram() shows distribution of values, i.e. how many times which value has appeared in data
+
+Let's say we just want to see what is going on in the tongue_twist measure. We know that this measure is continuous. From the cheatsheet, we can see that one of our options for a continuous variable is using geom_histogram:
+```{r}
+ggplot(pd, aes(x=tongue_twist))+
+  geom_histogram(aes(y = ..density..))
+```
+
+We can kind of see already, what is going on, but let's make it prettier by changing one of parameters of the geom:
+```{r}
+ggplot(pd, aes(x=tongue_twist))+
+  geom_histogram(binwidth = 3) #you can change binwidth if you want to, it's cosmetic
+  
+```
+
+Geom_histrogram just showed counts for different values of tongue twister column - majority reported time around 40 seconds. 
+
+Bonus question: Is there something weird with tongue twister data?
+
+Practice:
+Make a ggplot with geom_histogram to see distribution of choose_rand_num (Make a code chunk for it).
+
+```{r}
+install.packages("showtext")
+library(showtext)
+font_add("Arial", "/Library/Fonts/Arial.ttf")  # Use the actual file path
+showtext_auto()
+
+ggplot(pd, aes(x=choose_rand_num))+ 
+  geom_histogram(binwidth = 1)
+```
+
+
+Question: Do you think it's normally distributed? 
+
+Next week we will learn how to check for sure!
+
+
+##### geom_bar()
+Bar plots are fun and pretty simple. Bar plots work especially well, when x coordinate is categorical
+If we specify only x coordinate - geom_bar will put counts on y coordinate.
+
+Let's try it out by setting x coordinate to show gender and plotting geom_bar:
+
+```{r}
+ggplot(pd, aes(x=gender))+ 
+  geom_bar() 
+```
+
+
+If we know y-coordinate too, then we need to help geom_bar() to decide what to do with data instead of counting:
+```{r}
+ggplot(pd, aes(x=gender, y=balloon))+
+  geom_bar(stat='summary', fun.y = mean) #we ask to show us the mean of values on y coordinate
+```
+
+As you can see, geoms are pretty flexible! We can change functionality by changing stuff in parantheses - as you saw in geom_bar(stat='summary', fun.y = mean) 
+
+##### geom_errorbar()
+Needs specification in the parantheses to claculate and plot standard error of the mean :
+geom_errorbar(stat = 'summary', fun.data = mean_se) 
+
+```{r}
+ggplot(pd, aes(x=gender, y=balloon))+
+  geom_bar(stat='summary', fun.y = mean)+
+  geom_errorbar(stat = 'summary', fun.data = mean_sd)
+```
+
+
+
+##### More layers and aesthetics
+With ggplot, we can get more and more layers and settings - to make the plot look exactly like we want it.
+
+I tried to make the previous plot pretty. 
+
+Try to understand the script below, what does each geom do? What happens when you change settings?
+
+```{r}
+
+ggplot(pd, aes(x=gender, y=balloon, fill = gender))+
+  geom_bar(stat='summary', fun.y = mean, width = 0.5)+
+  geom_errorbar(stat = 'summary', fun.data = mean_se, width = 0.2)+
+  labs(x = "Gender", y = "Balloon time")+
+  theme_minimal()
+  
+
+```
+
+#### Visualization exercise
+1. Identically to bar plots we've made above, make a bar plot showing average shoesize according to handedness.
+
+```{r}
+if (!require("RColorBrewer")) {
+install.packages("RColorBrewer")
+library(RColorBrewer)
+}
+
+p <- ggplot(pd, aes(x=handedness, y=shoesize, fill = handedness))+
+  geom_bar(stat='summary', fun.y = mean, width = 0.5)+
+  geom_errorbar(stat='summary', fun.data = mean_se, width = 0.2)+
+  labs(x="handedness", y = "shoesize")+
+  scale_fill_brewer(palette="Spectral") +  #too get colors
+  coord_cartesian(ylim = c(35,45))+
+  theme_grey()
+p
+
+warnings()
+ colors() # shows me all available colors
+```
+
+
+2. Try to make it pretty!
+
+
+
+## Homework exercises
+1. Make sure to finish Part 2 - before Tuesday Cognition and Communication class (just read it and solve the 3 questions in exercises, you'll feel better in the class)
+
+2. Do the visualization exercise
+3. Play around with Ggplot! Use the ggplot cheatsheet, change different parts of your code and see what changed
+
+3.(Optional) Go through Chapter 3 in 'R for Data Science' book (http://r4ds.had.co.nz/index.html) 
+

@@ -9,6 +9,7 @@ output:
 
 ```{r setup}
 knitr::opts_chunk$set(echo = TRUE, include = TRUE)
+tinytex::install_tinytex()
 ```
 
 ## Portfolio exam - Part 1
